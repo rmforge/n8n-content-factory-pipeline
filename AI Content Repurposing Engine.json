@@ -1,0 +1,204 @@
+{
+  "name": "AI Content Repurposing Engine",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        912,
+        64
+      ],
+      "id": "d61b43de-bbc9-43d5-9a37-b66d5ed0be77",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2e92eb4b-6a92-43d1-88bf-c862cb829b99",
+              "name": "text",
+              "value": "This is a day I've been looking forward to for two and a half years. Every once in a while, a revolutionary product comes along that changes everything. Today, we’re introducing three revolutionary products of this class. The first one is a widescreen iPod with touch controls. The second is a revolutionary mobile phone. And the third is a breakthrough Internet communications device. So, three things: a widescreen iPod with touch controls; a revolutionary mobile phone; and a breakthrough Internet communications device. An iPod, a phone, and an Internet communicator. An iPod, a phone… are you getting it? These are not three separate devices, this is one device, and we are calling it iPhone. Today, Apple is going to reinvent the phone.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1120,
+        64
+      ],
+      "id": "d00bb3b0-05d9-4e74-9b31-4afc8af5ca5d",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a viral social media manager. I will give you a transcript of a video.\nYour goal is to repurpose this content into 2 distinct formats.\n\nINPUT TEXT:\n{{ $json.text }}\n\nOUTPUT INSTRUCTIONS:\nReturn a valid JSON object with the following structure:\n{\n  \"linkedin_post\": \"A professional, thought-leadership style post (max 200 words) with emojis and hashtags.\",\n  \"twitter_thread\": [\n     \"Tweet 1 (Hook)\",\n     \"Tweet 2 (Point 1)\",\n     \"Tweet 3 (Point 2)\",\n     \"Tweet 4 (Point 3)\",\n     \"Tweet 5 (Conclusion)\"\n  ],\n  \"newsletter_blurb\": \"A short, punchy summary for an email newsletter.\"\n}",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        1328,
+        64
+      ],
+      "id": "0b7334b4-9070-473c-a182-3300dcb34daa",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-pro-latest",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1312,
+        288
+      ],
+      "id": "7d7de63a-78fa-4b53-8bb2-1236154c9712",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "YOUR_GEMINI_API_KEY_HERE",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the text from the AI\nconst aiOutput = $input.item.json.text;\n\n// Clean up the markdown formatting (Remove ```json and ```)\nconst cleanJson = aiOutput.replace(/```json/g, '').replace(/```/g, '').trim();\n\n// Parse it into real data objects\nreturn {\n  json: JSON.parse(cleanJson)\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        64
+      ],
+      "id": "555ad4b7-5d18-4080-9f61-22aa7bb6b7bc",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "databaseId": {
+          "__rl": true,
+          "value": "2bbe5a53-6574-80fb-9a91-c1210036a574",
+          "mode": "list",
+          "cachedResultName": "2bbe5a53-6574-80fb-9a91-c1210036a574",
+          "cachedResultUrl": "https://www.notion.so/2bbe5a53657480fb9a91c1210036a574"
+        },
+        "title": "iPhone Launch (AI Test)",
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Status|select",
+              "selectValue": "Draft"
+            },
+            {
+              "key": "LinkedIn Draft|rich_text",
+              "textContent": "={{ $json.linkedin_post }}"
+            },
+            {
+              "key": "Newsletter Draft|rich_text",
+              "textContent": "={{ $json.newsletter_blurb }}"
+            },
+            {
+              "key": "Twitter Thread|rich_text",
+              "textContent": "={{ $json.twitter_thread.join('\\n\\n') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        1888,
+        64
+      ],
+      "id": "a8d0bfa7-306e-436c-b5ee-0d415e024b0b",
+      "name": "Create a database page",
+      "credentials": {
+        "notionApi": {
+          "id": "FEt1YKgGM8s648ju",
+          "name": "Notion account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Create a database page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "65ee861a-d0fc-4263-be3f-a382cfbfcb2e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8c92defd2c69e8f659277e0758537425b76ab726eef18f35d9e39864147600db"
+  },
+  "id": "1NYXvadT6oaJzU6e",
+  "tags": []
+}
